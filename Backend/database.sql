@@ -38,5 +38,19 @@ insert into notifications(title,Recipient,Type,Verification,`Trigger`,Template) 
      'None',
      'Details',
    'View Template');
+   
+-- create table login(
+-- 	id integer primary key auto_increment,
+--     uid varchar(255) not null,
+--     pid varchar(255) not null
+-- );
+
+-- select * from login;
+
+SELECT * FROM Banking_app.login ORDER BY id DESC;
+
+SELECT * FROM Banking_app.register ORDER BY id DESC;
+
+
 
 

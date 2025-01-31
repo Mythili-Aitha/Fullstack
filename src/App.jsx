@@ -5,6 +5,7 @@ import DashBoard from "./Components/DashBoard";
 import Test from "./Components/Test";
 import Banking from "./Components/Banking";
 import { useEffect, useState } from "react";
+import Registration from "./Components/Registration";
 
 function App() {
   const [notification, setNotification] = useState([]);
@@ -43,6 +44,7 @@ function App() {
           element={<Banking notificationsGet={notification} />}
         />
         <Route path="/hi" element={<Test />} />
+        <Route path="/register" element={<Registration />} />
       </Routes>
     </Router>
   );
