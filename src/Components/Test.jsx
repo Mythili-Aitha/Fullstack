@@ -37,6 +37,7 @@ export default function Test() {
         value={uid}
         onChange={(e) => setUid(e.target.value)}
       />
+      <p>HI</p>
       <Button type="submit" variant="contained">
         Submit
       </Button>
