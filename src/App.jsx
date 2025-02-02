@@ -6,6 +6,7 @@ import Test from "./Components/Test";
 import Banking from "./Components/Banking";
 import { useEffect, useState } from "react";
 import Registration from "./Components/Registration";
+import AuthPage from "./Components/AuthPage";
 
 function App() {
   const [notification, setNotification] = useState([]);
@@ -38,9 +39,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<DashBoard itemsGet={items} />} />
+        <Route path="/" element={<AuthPage />} />
+        <Route path="/Dashboard" element={<DashBoard itemsGet={items} />} />
         <Route
-          path="/:test"
+          path="/Dashboard/:test"
           element={<Banking notificationsGet={notification} />}
         />
         <Route path="/hi" element={<Test />} />
