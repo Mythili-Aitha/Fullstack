@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   List,
   ListItem,
@@ -20,6 +20,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useNavigate } from "react-router-dom";
+import UserContext from "../UserContext";
 
 const options = ["Ascending A-Z", "Descending Z-A"];
 
@@ -30,6 +31,7 @@ export default function DashBoard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 for Ascending, 1 for Descending
+  const { uid, setUid } = useContext(UserContext);
 
   // ✅ Fetch items from API
   useEffect(() => {
@@ -92,9 +94,10 @@ export default function DashBoard() {
               alignItems: "start",
               fontFamily: "initial",
               fontStyle: "italic",
+              textTransform: "capitalize",
             }}
           >
-            SELF-HEAL
+            {`Welcome to SELF-HEAL ${uid}`}
           </Typography>
           <Card
             sx={{
