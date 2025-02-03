@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   List,
   ListItem,
@@ -13,39 +13,41 @@ import {
   ButtonGroup,
   Menu,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import { Typography } from "@mui/material";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const options = ["Ascending A-Z", "Descending Z-A"];
 
-export default function DashBoard({ itemsGet }) {
+export default function DashBoard() {
   const navigate = useNavigate();
-  const items = itemsGet;
-  console.log("vachai items", itemsGet);
+  const [items, setItems] = useState([]); // Stores fetched items
+  const [sortedItems, setSortedItems] = useState([]); // Stores sorted items
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortedItems, setSortedItems] = useState(items);
   const [anchorEl, setAnchorEl] = useState(null);
-
-  const isMenuOpen = Boolean(anchorEl);
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 for Ascending, 1 for Descending
 
+  // ✅ Fetch items from API
   useEffect(() => {
-    sortItems(selectedIndex); // Sort initially based on selection
-  }, [items]);
-  // Handle menu open/close
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+    fetch("http://localhost:3000/api/items")
+      .then((res) => res.json())
+      .then((json) => {
+        console.log("Items from backend:", json);
+        if (Array.isArray(json)) {
+          setItems(json);
+          setSortedItems(json); // ✅ Initialize sorted items
+        }
+      })
+      .catch((error) => console.error("Error fetching items:", error));
+  }, []);
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  // ✅ Open/Close Sorting Menu
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
 
   const handleMenuItemClick = (index) => {
     setSelectedIndex(index);
@@ -53,7 +55,7 @@ export default function DashBoard({ itemsGet }) {
     handleMenuClose();
   };
 
-  // Sorting logic
+  // ✅ Sorting logic (for array of strings)
   const sortItems = (index) => {
     const sorted = [...items].sort((a, b) =>
       index === 0 ? a.localeCompare(b) : b.localeCompare(a)
@@ -61,12 +63,14 @@ export default function DashBoard({ itemsGet }) {
     setSortedItems(sorted);
   };
 
-  // Filtered items
-  const filteredItems = sortedItems.filter((item) =>
-    item.toLowerCase().includes(searchQuery.toLowerCase())
+  // ✅ Filter items based on search input
+  const filteredItems = sortedItems.filter(
+    (item) =>
+      typeof item === "string" &&
+      item.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Split items into chunks for columns
+  // ✅ Split items into chunks for column display
   const chunkData = (array, size) => {
     const result = [];
     for (let i = 0; i < array.length; i += size) {
@@ -79,7 +83,7 @@ export default function DashBoard({ itemsGet }) {
 
   return (
     <>
-      {items ? (
+      {items.length > 0 ? (
         <>
           <Typography
             variant="h4"
@@ -100,7 +104,6 @@ export default function DashBoard({ itemsGet }) {
               marginTop: "50px",
             }}
           >
-            {/* Combined Horizontal Layout for Search Bar and Sort */}
             <Box
               sx={{
                 display: "flex",
@@ -109,18 +112,15 @@ export default function DashBoard({ itemsGet }) {
                 marginBottom: 2,
               }}
             >
-              {/* Search Bar */}
+              {/* ✅ Search Bar */}
               <TextField
                 sx={{
                   width: "60%",
                   backgroundColor: "#f5f5f5",
                   borderRadius: "4px",
-                  "& .MuiInput-underline:before": {
-                    borderBottom: "none", // Remove the default underline
-                  },
+                  "& .MuiInput-underline:before": { borderBottom: "none" },
                 }}
-                size="meduim"
-                padding="2"
+                size="medium"
                 variant="standard"
                 placeholder="Search..."
                 value={searchQuery}
@@ -134,12 +134,12 @@ export default function DashBoard({ itemsGet }) {
                 }}
               />
 
-              {/* Sort Dropdown */}
+              {/* ✅ Sort Dropdown */}
               <ButtonGroup variant="text">
                 <Button
                   size="small"
-                  aria-controls={isMenuOpen ? "sort-menu" : undefined}
-                  aria-expanded={isMenuOpen ? "true" : undefined}
+                  aria-controls={anchorEl ? "sort-menu" : undefined}
+                  aria-expanded={Boolean(anchorEl)}
                   aria-label="select sorting order"
                   aria-haspopup="menu"
                   onClick={handleMenuOpen}
@@ -151,7 +151,7 @@ export default function DashBoard({ itemsGet }) {
               <Menu
                 id="sort-menu"
                 anchorEl={anchorEl}
-                open={isMenuOpen}
+                open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
               >
                 {options.map((option, index) => (
@@ -166,51 +166,27 @@ export default function DashBoard({ itemsGet }) {
               </Menu>
             </Box>
 
-            {/* Multi-Column List with Vertical Divider */}
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2, // Add space between columns
-              }}
-            >
+            {/* ✅ Multi-Column List with Vertical Dividers */}
+            <Box sx={{ display: "flex", gap: 2 }}>
               {chunks.map((chunk, columnIndex) => (
                 <React.Fragment key={columnIndex}>
-                  <Box
-                    sx={{
-                      flex: 1,
-                    }}
-                  >
+                  <Box sx={{ flex: 1 }}>
                     <List
-                      sx={{
-                        bgcolor: "background.paper",
-                        borderRadius: "4px",
-                      }}
+                      sx={{ bgcolor: "background.paper", borderRadius: "4px" }}
                     >
                       {chunk.map((item, rowIndex) => (
                         <React.Fragment key={`${columnIndex}-${rowIndex}`}>
                           <ListItem
                             sx={{
                               justifyContent: "space-between",
-                              display: "flex",
-                              alignItems: "center",
-                              padding: 0.5,
                               cursor: "pointer",
                             }}
                           >
                             <ListItemText
                               primary={item}
-                              onClick={() => {
-                                navigate(item.toLowerCase());
-                                console.log(`CLICKED: ${item}`);
-                              }}
+                              onClick={() => navigate(item.toLowerCase())}
                             />
-                            <IconButton
-                              edge="end"
-                              aria-label="Next"
-                              onClick={() => {
-                                console.log(`Icon clicked for: ${item}`);
-                              }}
-                            >
+                            <IconButton edge="end">
                               <ChevronRightIcon />
                             </IconButton>
                           </ListItem>
@@ -219,14 +195,14 @@ export default function DashBoard({ itemsGet }) {
                       ))}
                     </List>
                   </Box>
-                  {/* Add a vertical divider between columns */}
+                  {/* ✅ Add vertical divider between columns */}
                   {columnIndex < chunks.length - 1 && (
                     <Divider
                       orientation="vertical"
                       flexItem
                       sx={{
-                        borderColor: "rgba(0, 0, 0, 0.1)", // Light gray color
-                        margin: "0 8px", // Add space around the divider
+                        borderColor: "rgba(0, 0, 0, 0.1)",
+                        margin: "0 8px",
                       }}
                     />
                   )}
@@ -236,7 +212,9 @@ export default function DashBoard({ itemsGet }) {
           </Card>
         </>
       ) : (
-        <p>Inka data rale</p>
+        <Typography variant="h6" sx={{ textAlign: "center", marginTop: 5 }}>
+          No data available
+        </Typography>
       )}
     </>
   );

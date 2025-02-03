@@ -24,60 +24,65 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 
 const options = ["Ascending A-Z", "Descending Z-A"];
 
-export default function Banking({ notificationsGet }) {
+export default function Banking() {
   const [openDrawer, setOpenDrawer] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortedItems, setSortedItems] = useState([]);
+  const [notification, setNotification] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const { test } = useParams();
-  console.log("inka test chedma", test);
+
+  // ✅ Fetch data from backend
+  const fetchNotifications = () => {
+    fetch("http://localhost:3000/api/notifications")
+      .then((res) => res.json())
+      .then((json) => {
+        console.log("Notifications from backend:", json);
+        if (json.data) setNotification(json.data);
+      })
+      .catch((error) => console.error("Error fetching notifications:", error));
+  };
+
   useEffect(() => {
-    setSortedItems(notificationsGet);
-  }, [notificationsGet]); // Update state when props change
+    fetchNotifications();
+  }, []);
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const isMenuOpen = Boolean(anchorEl);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const handleOpenDrawer = (item) => {
-    setOpenDrawer(item);
-  };
-
-  const handleCloseDrawer = () => {
-    setOpenDrawer(null);
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleMenuItemClick = (index) => {
-    setSelectedIndex(index);
-    sortItems(index);
-    handleMenuClose();
-  };
-
-  // Filtering logic
-  const filteredItems = sortedItems.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Sorting logic
-  const sortItems = (index) => {
-    const sorted = [...sortedItems].sort((a, b) =>
-      index === 0
+  // ✅ Sort and Filter Logic
+  const filteredItems = notification
+    .filter(
+      (item) =>
+        item &&
+        item.title &&
+        typeof item.title === "string" &&
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) =>
+      selectedIndex === 0
         ? a.title.localeCompare(b.title)
         : b.title.localeCompare(a.title)
     );
-    setSortedItems(sorted);
+
+  // ✅ Sorting Menu
+  const [anchorEl, setAnchorEl] = useState(null);
+  const isMenuOpen = Boolean(anchorEl);
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleMenuItemClick = (index) => {
+    setSelectedIndex(index);
+    handleMenuClose();
   };
+
+  // ✅ Drawer Logic
+  const handleOpenDrawer = (item) => setOpenDrawer(item);
+  const handleCloseDrawer = () => setOpenDrawer(null);
+
+  function capitalizeFirstLetter(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
+  }
 
   return (
     <>
+      {/* ✅ Back Button */}
       <Button
         sx={{ display: "flex", alignItems: "flex-start" }}
         onClick={() => {
@@ -87,11 +92,13 @@ export default function Banking({ notificationsGet }) {
       >
         <KeyboardArrowLeftIcon />
       </Button>
+
+      {/* ✅ Main Card */}
       <Card
         sx={{ padding: 3, maxWidth: "85%", margin: "auto", marginTop: "50px" }}
       >
         <Box>
-          {/* Search & Sorting */}
+          {/* ✅ Search & Sorting */}
           <Box
             sx={{
               display: "flex",
@@ -162,6 +169,7 @@ export default function Banking({ notificationsGet }) {
             </Menu>
           </Box>
 
+          {/* ✅ Title */}
           <Typography
             variant="h6"
             sx={{
@@ -169,147 +177,141 @@ export default function Banking({ notificationsGet }) {
               paddingTop: 2,
               display: "flex",
               alignItems: "flex-start",
-              textTransform: "",
             }}
           >
-            {`${test} Notification Templates`}
+            {`${capitalizeFirstLetter(test)} Notification Templates`}
           </Typography>
 
-          {/* Notification List */}
+          {/* ✅ Notification List */}
           <List>
-            {filteredItems.map((item, index) => {
-              return (
-                <React.Fragment key={index}>
-                  <ListItem
+            {filteredItems.map((item, index) => (
+              <React.Fragment key={index}>
+                <ListItem
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    paddingX: 1,
+                  }}
+                >
+                  <Typography variant="subtitle1" gutterBottom>
+                    {item.title}
+                  </Typography>
+                  <Box
                     sx={{
                       display: "flex",
-                      flexDirection: "column",
                       justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      paddingX: 1,
+                      width: "100%",
+                      padding: 1,
                     }}
                   >
-                    {/* Title */}
-                    <Typography variant="subtitle1" gutterBottom>
-                      {item.title}
-                    </Typography>
-
-                    {/* Details Row */}
+                    {/* Recipient */}
                     <Box
                       sx={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        width: "100%",
-                        padding: 1,
+                        flexDirection: "column",
+                        flex: 1,
+                        alignItems: "flex-start",
                       }}
                     >
-                      {/* Recipient */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          flex: 1,
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Typography variant="caption" color="textSecondary">
-                          Recipient
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: "600" }}>
-                          {item.Recipient}
-                        </Typography>
-                      </Box>
-                      {/* Type */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          flex: 1,
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Typography variant="caption" color="textSecondary">
-                          Type
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: "600" }}>
-                          {item.Type}
-                        </Typography>
-                      </Box>
-                      {/* Verification */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          flex: 1,
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Typography variant="caption" color="textSecondary">
-                          Verification
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: "600" }}>
-                          {item.Verification}
-                        </Typography>
-                      </Box>
-
-                      {/* Trigger Button (Opens Drawer) */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Typography variant="caption" color="textSecondary">
-                          Trigger
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            flex: 1,
-                            color: "#238fc6",
-                            textTransform: "none",
-                            fontWeight: "600",
-                            cursor: "pointer", // Makes it clickable
-                          }}
-                          onClick={() => handleOpenDrawer(item)}
-                        >
-                          {item.Trigger}
-                        </Typography>
-                      </Box>
-                      {/* Template */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          flex: 1,
-                          alignItems: "flex-end",
-                        }}
-                      >
-                        <Typography
-                          vvariant="body2"
-                          sx={{
-                            flex: 1,
-                            color: "#37960d",
-                            textTransform: "none",
-                            fontWeight: "600",
-                            cursor: "pointer", // Makes it clickable
-                          }}
-                        >
-                          <DescriptionIcon />
-                          {item.Template}
-                        </Typography>
-                      </Box>
+                      <Typography variant="caption" color="textSecondary">
+                        Recipient
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: "600" }}>
+                        {item.Recipient}
+                      </Typography>
                     </Box>
-                  </ListItem>
-                  <Divider />
-                </React.Fragment>
-              );
-            })}
+                    {/* Type */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        flex: 1,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Typography variant="caption" color="textSecondary">
+                        Type
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: "600" }}>
+                        {item.Type}
+                      </Typography>
+                    </Box>
+                    {/* Verification */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        flex: 1,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Typography variant="caption" color="textSecondary">
+                        Verification
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: "600" }}>
+                        {item.Verification}
+                      </Typography>
+                    </Box>
+
+                    {/* Trigger Button (Opens Drawer) */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Typography variant="caption" color="textSecondary">
+                        Trigger
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          flex: 1,
+                          color: "#238fc6",
+                          textTransform: "none",
+                          fontWeight: "600",
+                          cursor: "pointer", // Makes it clickable
+                        }}
+                        onClick={() => handleOpenDrawer(item)}
+                      >
+                        {item.Trigger}
+                      </Typography>
+                    </Box>
+                    {/* Template */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        flex: 1,
+                        alignItems: "flex-end",
+                      }}
+                    >
+                      <Typography
+                        vvariant="body2"
+                        sx={{
+                          flex: 1,
+                          color: "#37960d",
+                          textTransform: "none",
+                          fontWeight: "600",
+                          cursor: "pointer", // Makes it clickable
+                        }}
+                      >
+                        <DescriptionIcon />
+                        {item.Template}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+                <Divider />
+              </React.Fragment>
+            ))}
           </List>
         </Box>
 
-        {/* Drawer */}
+        {/* ✅ Drawer for Notification Details */}
         <Drawer
           anchor="right"
           open={Boolean(openDrawer)}
@@ -335,11 +337,6 @@ export default function Banking({ notificationsGet }) {
                   Type:
                 </Typography>
                 <Typography>{openDrawer.Type}</Typography>
-
-                <Typography sx={{ fontWeight: "bold", marginTop: 1 }}>
-                  Verification:
-                </Typography>
-                <Typography>{openDrawer.Verification}</Typography>
               </>
             )}
           </Box>

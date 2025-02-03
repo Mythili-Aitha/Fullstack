@@ -46,11 +46,19 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/register", async (req, res) => {
     const { name,usid, psid,num } = req.body;
+    const checkSql= "SELECT * FROM register WHERE usid=?"
     const sql = "INSERT INTO register (name,usid, psid,num) VALUES (?, ?, ?, ?)";
+
     try {
+        const [exsistingUser] = await pool.query(checkSql, [usid])
+        if (exsistingUser.length > 0) {
+            return res.status(400).json({ error: "already exsists" });
+        }
+    
         const [result] = await pool.query(sql, [name,usid, psid,num]);
         console.log("Insert Result:", result);
         res.json({ message: "User inserted successfully!", usid: result.insertId });
+        
     } catch (error) {
         console.error("Insert error:", error);
         res.status(500).json({ error: "Database Insert Failed" });
