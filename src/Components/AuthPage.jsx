@@ -7,7 +7,10 @@ import {
   Typography,
   Tabs,
   Tab,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material"; // ✅ Import icons
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -27,24 +30,26 @@ export default function AuthPage() {
   const [rpsid, setRpsid] = useState("");
   const [num, setNum] = useState("");
   const [registerError, setRegisterError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const [passwordError, setPasswordError] = useState("");
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
-  const handleMouseUpPassword = (event) => {
-    event.preventDefault();
-  };
+  // ✅ Password Visibility Toggles
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((prev) => !prev);
+  const handleClickShowConfirmPassword = () =>
+    setShowConfirmPassword((prev) => !prev);
+  const handleMouseDownPassword = (event) => event.preventDefault();
 
   // ✅ Handles tab switching
   const handleTabChange = (event, newIndex) => {
     setTabIndex(newIndex);
-    setLoginError(""); // Clear errors
+    setLoginError("");
     setRegisterError("");
+    setPasswordError("");
   };
 
-  // ✅ Handles Login Functionality
+  // ✅ Handles Login
   const handleLogin = async (event) => {
     event.preventDefault();
     let user = { uid, pid };
@@ -57,6 +62,7 @@ export default function AuthPage() {
       });
 
       const data = await response.json();
+      //   console.log("Login Response:", data);
       if (response.ok) {
         navigate("/dashboard"); // ✅ Navigate on successful login
       } else {
@@ -67,12 +73,12 @@ export default function AuthPage() {
     }
   };
 
-  // ✅ Handles Registration Functionality
+  // ✅ Handles Registration
   const handleRegister = async (event) => {
     event.preventDefault();
 
     if (psid !== rpsid) {
-      setRegisterError("Passwords do not match");
+      setPasswordError("Passwords do not match!");
       return;
     }
 
@@ -88,9 +94,14 @@ export default function AuthPage() {
       const data = await response.json();
       if (response.ok) {
         setRegisterError("Registration successful! Please log in.");
-        setTabIndex(0); // ✅ Switch to Login tab after successful registration
+        setTabIndex(0);
+        setPasswordError(""); // ✅ Reset error on success
       } else {
-        setRegisterError(data.error || "Registration failed");
+        if (data.error.includes("already exsists")) {
+          setRegisterError("User already registered. Please log in!!");
+        } else {
+          setRegisterError(data.error || "Registration failed");
+        }
       }
     } catch (error) {
       setRegisterError("Network error, try again");
@@ -100,8 +111,9 @@ export default function AuthPage() {
   return (
     <Card sx={{ width: "100%", maxWidth: 400, mx: "auto", mt: 5, p: 3 }}>
       <h2 style={{ color: "#692dc6", fontSize: "24px", textAlign: "center" }}>
-        Welcome ! Enter Credentials
+        Welcome To Self-Heal !!
       </h2>
+
       {/* ✅ Tabs for Login & Register */}
       <Tabs value={tabIndex} onChange={handleTabChange} centered>
         <Tab label="Login" />
@@ -155,6 +167,8 @@ export default function AuthPage() {
               value={usid}
               onChange={(e) => setUsid(e.target.value)}
             />
+
+            {/* ✅ Password Field with Eye Icon */}
             <TextField
               variant="outlined"
               required
@@ -167,59 +181,74 @@ export default function AuthPage() {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={
-                        showPassword ? "hide password" : "show password"
-                      }
                       onClick={handleClickShowPassword}
-                      onMouseUp={handleMouseUpPassword}
-                      onMouseDown={handleMouseDownPassword} // Prevents focus loss
+                      onMouseDown={handleMouseDownPassword}
                       edge="end"
                     >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
+
+            {/* ✅ Confirm Password Field with Error Handling */}
             <TextField
               variant="outlined"
               required
               size="small"
               placeholder="Re-Type Password"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               value={rpsid}
               onChange={(e) => setRpsid(e.target.value)}
+              error={!!passwordError} // ✅ Red border when error
+              helperText={passwordError} // ✅ Shows error message below field
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={
-                        showPassword ? "hide password" : "show password"
-                      }
-                      onClick={handleClickShowPassword}
-                      onMouseUp={handleMouseUpPassword}
-                      onMouseDown={handleMouseDownPassword} // Prevents focus loss
+                      onClick={handleClickShowConfirmPassword}
+                      onMouseDown={handleMouseDownPassword}
                       edge="end"
                     >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                      {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
+
             <TextField
               variant="outlined"
               required
               size="small"
               placeholder="Phone Number"
+              type="tel" // ✅ Use tel instead of number
               value={num}
-              onChange={(e) => setNum(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ""); // ✅ Remove non-numeric characters
+                if (value.length <= 10) {
+                  setNum(value);
+                }
+              }}
+              error={num.length > 0 && num.length !== 10} // ✅ Show red border if not 10 digits
+              helperText={
+                num.length > 0 && num.length !== 10
+                  ? "Phone number must be 10 digits"
+                  : ""
+              }
+              inputProps={{ maxLength: 10 }} // ✅ Prevent entering more than 10 digits
             />
+
             <Divider />
             {registerError && (
               <Typography color="error">{registerError}</Typography>
             )}
-            <Button type="submit" variant="contained">
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!!passwordError}
+            >
               Register
             </Button>
           </Box>
