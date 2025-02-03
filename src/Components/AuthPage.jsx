@@ -11,15 +11,16 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material"; // ✅ Import icons
-import { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import UserContext from "../UserContext";
 
 export default function AuthPage() {
-  const [tabIndex, setTabIndex] = useState(0); // 0 = Login, 1 = Register
+  const [tabIndex, setTabIndex] = useState(1); // 0 = Login, 1 = Register
   const navigate = useNavigate();
 
   // ** Login State **
-  const [uid, setUid] = useState("");
+  const { uid, setUid } = useContext(UserContext);
   const [pid, setPid] = useState("");
   const [loginError, setLoginError] = useState("");
 

@@ -13,6 +13,9 @@ import {
   Button,
   MenuItem,
   Drawer,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -29,6 +32,12 @@ export default function Banking() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notification, setNotification] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [filterDrawer, setFilterDrawer] = useState(false);
+  const [filteredNotifications, setFilteredNotifications] = useState([]);
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedRecipient, setSelectedRecipient] = useState("");
+  const [selectedVerification, setSelectedVerification] = useState("");
+
   const navigate = useNavigate();
   const { test } = useParams();
 
@@ -38,7 +47,10 @@ export default function Banking() {
       .then((res) => res.json())
       .then((json) => {
         console.log("Notifications from backend:", json);
-        if (json.data) setNotification(json.data);
+        if (json.data) {
+          setNotification(json.data);
+          setFilteredNotifications(json.data);
+        }
       })
       .catch((error) => console.error("Error fetching notifications:", error));
   };
@@ -48,20 +60,17 @@ export default function Banking() {
   }, []);
 
   // ✅ Sort and Filter Logic
-  const filteredItems = notification
+  const filteredItems = (
+    filteredNotifications.length > 0 ? filteredNotifications : []
+  )
     .filter(
-      (item) =>
-        item &&
-        item.title &&
-        typeof item.title === "string" &&
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      (item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) // ✅ Search works on filtered data
     )
     .sort((a, b) =>
       selectedIndex === 0
         ? a.title.localeCompare(b.title)
         : b.title.localeCompare(a.title)
     );
-
   // ✅ Sorting Menu
   const [anchorEl, setAnchorEl] = useState(null);
   const isMenuOpen = Boolean(anchorEl);
@@ -74,12 +83,66 @@ export default function Banking() {
 
   // ✅ Drawer Logic
   const handleOpenDrawer = (item) => setOpenDrawer(item);
+  const handleFilterDrawer = () => setFilterDrawer((prev) => !prev);
+  const handleCFilterDrawer = () => setFilterDrawer(false);
   const handleCloseDrawer = () => setOpenDrawer(null);
 
   function capitalizeFirstLetter(str) {
     return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
   }
 
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    if (name === "type") {
+      setSelectedType(value);
+    } else if (name === "recipient") {
+      setSelectedRecipient(value);
+    } else if (name === "verification") {
+      setSelectedVerification(value);
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedType("");
+    setSelectedRecipient("");
+    setSelectedVerification("");
+  };
+
+  const handleApply = () => {
+    if (!selectedType && !selectedRecipient) {
+      setFilteredNotifications(notification);
+    } else {
+      const filteredData = notification.filter((item) => {
+        const typeValue = item.Type.trim();
+        const recipientValue = item.Recipient.trim();
+        const verificationValue = item.Verification.trim();
+
+        const typeMatches = selectedType ? typeValue === selectedType : true;
+        const recipientMatches = selectedRecipient
+          ? recipientValue === selectedRecipient
+          : true;
+        const verificationMatches = selectedVerification
+          ? verificationValue === selectedVerification
+          : true;
+
+        return typeMatches && recipientMatches && verificationMatches;
+      });
+      console.log(filteredData);
+      setFilteredNotifications(filteredData);
+    }
+
+    console.log(
+      "Selected Filters:",
+      selectedType,
+      "Recipient:",
+      selectedRecipient
+    );
+    handleCFilterDrawer(); // ✅ Close the drawer
+  };
+
+  // const { Email, Push } = state;
+  console.log("filteredItems", filteredItems);
   return (
     <>
       {/* ✅ Back Button */}
@@ -129,8 +192,13 @@ export default function Banking() {
             {/* Filter Button */}
             <ButtonGroup variant="text">
               <Button
-                sx={{ display: "flex", justifyContent: "start" }}
+                sx={{
+                  display: "flex",
+                  justifyContent: "start",
+                  cursor: "pointer",
+                }}
                 size="medium"
+                onClick={() => handleFilterDrawer()}
               >
                 <FilterListIcon />
                 Filter
@@ -310,6 +378,74 @@ export default function Banking() {
             ))}
           </List>
         </Box>
+        {/* Drawer for Filter Button */}
+        <Drawer
+          anchor="right"
+          open={Boolean(filterDrawer)}
+          onClose={handleCFilterDrawer}
+        >
+          <Box
+            sx={{
+              width: 350,
+              padding: 3,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            <Typography variant="h6">Select Features</Typography>
+            <Divider sx={{ marginY: 2 }} />
+            <>
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  name="type"
+                  label="Type"
+                  value={selectedType}
+                  onChange={handleChange} // ✅ Update selectedType
+                >
+                  <MenuItem value="Email">Email</MenuItem>
+                  <MenuItem value="Push">Push</MenuItem>
+                  <MenuItem value="Email, Push">Email, Push</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Recipient</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  name="recipient"
+                  label="Recipient"
+                  value={selectedRecipient}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="Manager">Manager</MenuItem>
+                  <MenuItem value="Sub-Associate">Sub-Associate</MenuItem>
+                  <MenuItem value="Employee">Employee</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Verification</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  name="verification"
+                  label="Recipient"
+                  value={selectedVerification}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="None">None</MenuItem>
+                  <MenuItem value="Done">Done</MenuItem>
+                </Select>
+              </FormControl>
+              <Button variant="contained" onClick={handleApply}>
+                APPLY
+              </Button>
+              <Button variant="contained" onClick={handleClose}>
+                CLEAR
+              </Button>
+            </>
+          </Box>
+        </Drawer>
 
         {/* ✅ Drawer for Notification Details */}
         <Drawer
@@ -345,8 +481,7 @@ export default function Banking() {
               padding: 2,
               borderTop: "1px solid #ddd",
               textAlign: "center",
-              marginTop: "auto", // Pushes footer to bottom
-              backgroundColor: "#f5f5f5",
+              marginTop: "auto",
             }}
           >
             <Button variant="contained" fullWidth onClick={handleCloseDrawer}>
