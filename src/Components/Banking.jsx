@@ -43,7 +43,7 @@ export default function Banking() {
 
   // ✅ Fetch data from backend
   const fetchNotifications = () => {
-    fetch("http://localhost:3000/api/notifications")
+    fetch(`http://localhost:3000/api/notifications/${test}`)
       .then((res) => res.json())
       .then((json) => {
         console.log("Notifications from backend:", json);

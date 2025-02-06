@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { getNotifications, pool } from "./notifications.js";
 import items from "./items.js";
+import { data } from "react-router-dom";
+import notificationFactory from "./notificationFactory.js";
 
 const app = express();
 app.use(cors());
@@ -14,6 +16,17 @@ app.get("/", (req, res) => {
 app.get("/api/items", (req, res) => {
     res.send(items);
 });
+
+app.get("/api/notifications/:test", async(req, res)=>{
+    try {
+        const test = req.params.test; // Extracting the parameter from the request
+        const ams = notificationFactory.getNotifications(test)
+        res.json({ data: ams });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+})
 
 app.get("/api/notifications", async (req, res) => {
     try {
